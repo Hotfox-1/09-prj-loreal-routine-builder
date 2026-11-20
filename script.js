@@ -11,7 +11,6 @@ const chatForm = document.getElementById("chatForm");
 const chatWindow = document.getElementById("chatWindow");
 const userInput = document.getElementById("userInput");
 const sendButton = document.getElementById("sendBtn");
-const webSearchToggle = document.getElementById("webSearchToggle");
 const languageDirection = document.getElementById("languageDirection");
 
 /* Send advisor requests to the configured endpoint; no API key is stored here. */
@@ -151,7 +150,7 @@ function toggleProduct(productId) {
 }
 
 /* Add one chat bubble without treating AI text as HTML. */
-function addChatMessage(role, text, citations = []) {
+function addChatMessage(role, text) {
   const message = document.createElement("article");
   message.className = `chat-message ${role}`;
   const label = document.createElement("span");
@@ -162,40 +161,8 @@ function addChatMessage(role, text, citations = []) {
   content.textContent = text;
   message.append(label, content);
 
-  const safeCitations = citations.filter((citation) => citation && /^https?:\/\//i.test(citation.url || ""));
-  if (safeCitations.length > 0) {
-    const citationList = document.createElement("div");
-    citationList.className = "citation-list";
-    const citationLabel = document.createElement("span");
-    citationLabel.textContent = "Sources";
-    citationList.append(citationLabel);
-    safeCitations.forEach((citation, index) => {
-      const link = document.createElement("a");
-      link.href = citation.url;
-      link.target = "_blank";
-      link.rel = "noopener noreferrer";
-      link.textContent = citation.title || `Source ${index + 1}`;
-      citationList.append(link);
-    });
-    message.append(citationList);
-  }
-
   chatWindow.append(message);
   chatWindow.scrollTop = chatWindow.scrollHeight;
-}
-
-/* Collect citations returned with the advisor's response. */
-function getCitations(data) {
-  const message = data?.choices?.[0]?.message;
-  const annotations = Array.isArray(message?.annotations) ? message.annotations : [];
-  const annotationCitations = annotations
-    .filter((annotation) => annotation.type === "url_citation" && annotation.url_citation?.url)
-    .map((annotation) => ({
-      url: annotation.url_citation.url,
-      title: annotation.url_citation.title,
-    }));
-  const citations = Array.isArray(data?.citations) ? data.citations : [];
-  return [...annotationCitations, ...citations];
 }
 
 /* Send the full message history to the advisor, never an API key. */
@@ -205,7 +172,6 @@ async function requestAdvisorReply() {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       messages: conversation,
-      web_search: webSearchToggle.checked,
     }),
   });
   const data = await response.json();
@@ -217,7 +183,7 @@ async function requestAdvisorReply() {
   if (typeof reply !== "string" || !reply.trim()) {
     throw new Error("Your advisor's response could not be displayed. Please try again.");
   }
-  return { reply, citations: getCitations(data) };
+  return reply;
 }
 
 /* Lock controls while a request is running to prevent duplicate submissions. */
@@ -242,7 +208,7 @@ async function generateRoutine() {
   conversation = [
     {
       role: "system",
-      content: "You are a warm, careful beauty advisor. Use the user's selected product data to create a clear, practical routine, in sensible application order, with morning/evening steps when appropriate. Explain briefly why each product fits. Be mindful of skin and hair sensitivities, suggest patch testing, and do not make medical claims. Keep follow-up answers focused on the generated routine or skincare, haircare, makeup, fragrance, and related beauty topics. If asked something unrelated, politely guide the conversation back to those topics. Do not invent product facts. If web search is enabled and sources are returned, use them carefully and cite them.",
+      content: "You are a warm, careful beauty advisor. Use the user's selected product data to create a clear, practical routine, in sensible application order, with morning/evening steps when appropriate. Explain briefly why each product fits. Be mindful of skin and hair sensitivities, suggest patch testing, and do not make medical claims. Keep follow-up answers focused on the generated routine or skincare, haircare, makeup, fragrance, and related beauty topics. If asked something unrelated, politely guide the conversation back to those topics. Do not invent product facts.",
     },
     {
       role: "user",
@@ -256,10 +222,10 @@ async function generateRoutine() {
   setRequestState(true);
 
   try {
-    const { reply, citations } = await requestAdvisorReply();
+    const reply = await requestAdvisorReply();
     conversation.push({ role: "assistant", content: reply });
     chatWindow.innerHTML = "";
-    addChatMessage("assistant", reply, citations);
+    addChatMessage("assistant", reply);
     hasGeneratedRoutine = true;
     userInput.placeholder = "Ask a follow-up about your routine…";
     userInput.focus();
@@ -279,9 +245,9 @@ async function sendFollowUp(question) {
   setRequestState(true);
 
   try {
-    const { reply, citations } = await requestAdvisorReply();
+    const reply = await requestAdvisorReply();
     conversation.push({ role: "assistant", content: reply });
-    addChatMessage("assistant", reply, citations);
+    addChatMessage("assistant", reply);
   } catch (error) {
     conversation.pop();
     addChatMessage("assistant", error.message || "Something went wrong. Please try again.");

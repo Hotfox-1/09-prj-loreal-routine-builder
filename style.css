@@ -618,55 +618,6 @@ main {
   white-space: pre-wrap;
 }
 
-.citation-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
-  margin-block-start: 13px;
-  border-top: 1px solid var(--line);
-  padding-block-start: 10px;
-}
-
-.citation-list span {
-  flex-basis: 100%;
-  color: var(--muted);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.citation-list a {
-  color: #a45e00;
-  font-size: 11px;
-  text-underline-offset: 3px;
-}
-
-.chat-options {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-block-end: 10px;
-}
-
-.web-search-option {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--ink);
-  font-size: 11px;
-}
-
-.web-search-option input {
-  accent-color: var(--red);
-}
-
-.option-note {
-  color: var(--muted);
-  font-size: 10px;
-}
-
 .chat-form {
   display: flex;
   gap: 10px;
@@ -849,11 +800,6 @@ main {
 
   .chat-header h2 {
     font-size: 29px;
-  }
-
-  .chat-options {
-    align-items: flex-start;
-    flex-direction: column;
   }
 
   .chat-message {
